@@ -14,8 +14,12 @@ class EKWindow: UIWindow {
     
     init(with rootVC: UIViewController) {
         if #available(iOS 13.0, *) {
-            // TODO: Patched to support SwiftUI out of the box but should require attendance
-            if let scene = UIApplication.shared.connectedScenes.filter({$0.activationState == .foregroundActive}).first as? UIWindowScene {
+            // Attach the entry window to a scene so it is visible under the UIScene lifecycle.
+            // Prefer the foreground-active scene; fall back to any connected window scene
+            // (e.g. during cold start / returning from background / after system dialogs),
+            // because an unscened window is not displayed in a scene-based app.
+            let windowScenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            if let scene = windowScenes.first(where: { $0.activationState == .foregroundActive }) ?? windowScenes.first {
                 super.init(windowScene: scene)
             } else {
                 super.init(frame: UIScreen.main.bounds)
